@@ -5,7 +5,7 @@ applications like Redsea:
 [https://github.com/windytan/redsea](https://github.com/windytan/redsea)
 
 Ultimate goal is to extract DAB TPEG channel data, which the SI468x should
-be capable off - though it's poorly documented.
+be capable of - though it's poorly documented.
 
 Original Readme follows:
 
