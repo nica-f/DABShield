@@ -71,6 +71,7 @@ const byte DABResetPin = 7;
 const byte PwrEn = 6;
 #endif
 
+
 #define SPI_BUFF_SIZE	512
 unsigned char spiBuf[SPI_BUFF_SIZE + 8];
 uint8_t command_error;
@@ -158,11 +159,11 @@ void DAB::DataService(void)
 		parse_service_data();
 		_Callback();
 	}
-	//RDSINT
+	// RDSINT
 	if ((status0 & 0x04) == 0x04)
 	{
 		si468x_get_fm_rds_status();
-		if(rdsdata != 0)
+		// if(rdsdata != 0)
 			_Callback();
 	}
 }
@@ -476,7 +477,8 @@ static void si468x_init_dab()
 	si468x_set_property(0x1712, 0x0001);
 
 	si468x_set_property(0x8100, 0x0001);	//enable DSRVPCKTINT
-	si468x_set_property(0xb400, 0x0007);	//enable XPAD data	
+	//si468x_set_property(0xb400, 0x0007);	//enable XPAD data	
+	si468x_set_property(0xb400, 0x0017);	//enable XPAD & TPEG data
 }
 
 static void si468x_init_fm()
@@ -495,14 +497,23 @@ static void si468x_init_fm()
 	//Set up INTB
 	si468x_set_property(0x0000, 0x0004);
 
+	// FM Front End Varactor configuration Slope
 	si468x_set_property(0x1710, 0xF83E);
+	// FM Front End Varactor configuration intercept
 	si468x_set_property(0x1711, 0x01A4);	
+	// Additional configuration options for the front end
 	si468x_set_property(0x1712, 0x0001);
 
+	// Sets the FM Receive de-emphasis
 	si468x_set_property(0x3900, 0x0001);
-	si468x_set_property(0x3C00, 0x0001);
-	si468x_set_property(0x3C01, 0x0010);
-	si468x_set_property(0x3C02, 0x0001);
+
+	// This property configures interrupt related to RDS
+	si468x_set_property(0x3C00, 0x0001); // 0x0001
+	// Configures minimum received data groups in fifo before interrupt
+	si468x_set_property(0x3C01, 0x0004); // 0x0010
+	// Enables RDS and configures acceptable block error threshold
+	si468x_set_property(0x3C02, 0x00A1); // 0x0001
+	// 0x3C03 Configures RDS block confidencce threshold, default 0x1111
 }
 
 void DAB::si468x_get_part_info(void)
@@ -546,11 +557,12 @@ void DAB::si468x_fm_rsq_status(void)
 
 void DAB::si468x_get_fm_rds_status(void)
 {
+#if 0
 	uint16_t	blockA;
 	uint16_t	blockB;
 	uint16_t	blockC;
 	uint16_t	blockD;
-
+#endif
 	spiBuf[0] = SI46XX_FM_RDS_STATUS;
 	spiBuf[1] = 0x01;
 	WriteSpiMssg(spiBuf, 2);
@@ -568,6 +580,15 @@ void DAB::si468x_get_fm_rds_status(void)
 	blockC = spiBuf[17] + ((uint16_t)spiBuf[18] << 8);
 	blockD = spiBuf[19] + ((uint16_t)spiBuf[20] << 8);
 	rdsdata = decode_rds_group(blockA, blockB, blockC, blockD);
+
+#if 0
+	{
+		char buf[32];
+		snprintf(buf, 31, "%04X %04X %04X %04X", blockA, blockB, blockC, blockD);
+		//Serial.println(buf);
+		Serial.println("RDS dat");
+	}
+#endif
 }
 
 bool DAB::time(DABTime *time)
@@ -1268,6 +1289,8 @@ void DAB::parse_service_data(void)
 	seg_num = spiBuf[21] + (spiBuf[22] << 8);
 	num_segs = spiBuf[23] + (spiBuf[24] << 8);
 
+	tpeg = false;
+
 	(void)buff_count;
 	(void)srv_state;
 	(void)DSCty;
@@ -1303,9 +1326,18 @@ void DAB::parse_service_data(void)
 			ServiceData[j] = '\0';
 		}
 	}
+	else if (data_src == 0x01)
+	{
+		tpeg = true;
+		tpeg_type = DSCty;
+		tpeg_len = byte_count;
+	}
 	else
 	{
 		//NON RAD/DLS
+		tpeg = true;
+		tpeg_type = DSCty;
+		tpeg_len = byte_count;
 	}
 }
 

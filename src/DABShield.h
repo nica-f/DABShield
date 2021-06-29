@@ -118,6 +118,16 @@ class DAB {
 	uint8_t		Hours;
 	uint8_t		Minutes;
 
+	// raw RDS data blocks
+	uint16_t        blockA;
+	uint16_t        blockB;
+	uint16_t        blockC;
+	uint16_t        blockD;
+
+	bool	tpeg;
+	uint8_t	tpeg_type;
+	uint16_t	tpeg_len;
+
   private:
     void (*_Callback)(void);
     void DataService(void);
