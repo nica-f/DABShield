@@ -1,3 +1,14 @@
+Goal of my fork is to get sideband data from received FM and DAB
+transmissions, like the raw RDS data groups so that a host software can
+decode them, e.g. to extract TMC (Traffic Message Channel) information using
+applications like Redsea:
+[https://github.com/windytan/redsea](https://github.com/windytan/redsea)
+
+Ultimate goal is to extract DAB TPEG channel data, which the SI468x should
+be capable off - though it's poorly documented.
+
+Original Readme follows:
+
 ![enter image description here](https://www.avitresearch.co.uk/dabshield/images/wsebsiteheader.png)
 # DAB Shield
 Welcome to the DAB Shield Library GIT.
